@@ -1,0 +1,3 @@
+[submodule "zomlib"]
+	path = zomlib
+	url = git@github.com:i3ym/zomlib.git
