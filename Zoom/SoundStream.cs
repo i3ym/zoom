@@ -67,6 +67,56 @@ public class FileSoundStream : SoundStream
     public static SoundStream FromUrl(string url) => FromUrl(url, url);
     public static SoundStream FromYoutubeId(string id) => new FileSoundStream("yt_" + id, (writer, token) => Decoder.FromUrlProc(YouTube.GetDownloadUrl(id), token, writer));
 }
+public class DataCacheFileSoundStream : SoundStream
+{
+    public override long Loaded => Reader.Length;
+    public override long Position { get => Reader.Position; set => Reader.Position = value; }
+
+    public readonly Stream Reader;
+    protected override Func<Task>? LoadFunc { get; set; }
+
+    private DataCacheFileSoundStream(string category, string identifier, Func<Stream, CancellationToken, Task> loadFunc)
+    {
+        var path = Path.Combine(DataCache.CacheDirectory, Guid.NewGuid().ToString());
+        Reader = File.Open(path, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
+
+
+        LoadFunc = async () =>
+        {
+            var writer = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite);
+            await loadFunc(writer, CancellationToken.Token);
+
+            writer.Close();
+            DataCache.SetSongCacheFile(category, identifier, Path.GetRelativePath(DataCache.CacheDirectory, path));
+        };
+    }
+
+    public override int Read(byte[] buffer) => Reader.Read(buffer);
+
+
+    public static SoundStream FromUrl(string category, string identifier, string url) => new DataCacheFileSoundStream(category, identifier, (writer, token) => Decoder.FromUrlProc(url, token, writer));
+}
+public class CachedFileSoundStream : SoundStream
+{
+    public override long Loaded => Input.Length;
+    public override long Position { get => Input.Position; set => Input.Position = value; }
+
+    readonly Stream Input;
+    protected override Func<Task>? LoadFunc { get; set; }
+
+    private CachedFileSoundStream(Func<CancellationToken, Stream> func)
+    {
+        Input = func(CancellationToken.Token);
+        LoadFunc = () => Task.CompletedTask;
+    }
+
+    public override int Read(byte[] buffer) => Input.Read(buffer);
+
+
+    public static SoundStream FromPath(string path) => new CachedFileSoundStream(token => File.OpenRead(path));
+    public static SoundStream FromStream(Stream input) => new CachedFileSoundStream(token => input);
+}
+
 public class MemorySoundStream : SoundStream
 {
     public override long Loaded => Data.Count;

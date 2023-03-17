@@ -261,11 +261,24 @@ public class MusicPlayer
     string? mix(SocketMessage message, string query) => play(message,
         async state =>
         {
+            var cached = DataCache.TryGetCachedSearch("mixcloud", query);
+            if (cached is not null)
+            {
+                state.Queue.Enqueue(cached);
+                return cached.Info.ToString();
+            }
+
             var searchres = await Mixcloud.Search(query);
             var res = searchres.Data[0];
-            var url = await YtDlp.GetUrl(res.Url);
+            DataCache.SetSearch("mixcloud", query, res.Slug);
 
-            var song = new Song(res.ToSongInfo(), FileSoundStream.FromUrl("mix_" + res.Slug, url));
+            var sinfo = res.ToSongInfo();
+            DataCache.SetSongInfo("mixcloud", res.Slug, sinfo);
+
+            var url = await YtDlp.GetUrl(res.Url);
+            DataCache.SetSongCachedUrl("mixcloud", res.Slug, url);
+
+            var song = new Song(sinfo, DataCacheFileSoundStream.FromUrl("mixcloud", res.Slug, url));
 
             state.Queue.Enqueue(song);
             return song.Info.ToString();
@@ -313,7 +326,7 @@ public class MusicPlayer
             Task.Run(() =>
             {
                 foreach (var (artist, title, path) in Directory.GetFiles(dir, "*.osu", SearchOption.AllDirectories).DistinctBy(Path.GetDirectoryName).Select(osuToPath).Where(x => x.HasValue).Select(x => x!.Value).OrderBy(_ => Guid.NewGuid()))
-                    state.Queue.Enqueue(new Song(new SongInfo(artist, title, Decoder.InfoFromUri(path).Result.LengthSeconds), MemorySoundStream.FromUrl(path)));
+                    state.Queue.Enqueue(new Song(SongInfo.Create(artist, title, Decoder.InfoFromUri(path).Result.LengthSeconds), MemorySoundStream.FromUrl(path)));
 
 
                 static (string artist, string title, string path)? osuToPath(string osuPath)

@@ -117,8 +117,8 @@ public static class Decoder
 
             return (author, title) switch
             {
-                ({ } a, { } t) => new SongInfo(a, t, length),
-                ({ } a, null) => new SongInfo(a, "Неизвестный трек", length),
+                ({ } a, { } t) => SongInfo.Create(a, t, length),
+                ({ } a, null) => SongInfo.Create(a, "Неизвестный трек", length),
                 (null, { } t) => new SongInfo(t, length),
 
                 _ when path.StartsWith('/') && (Path.GetFileNameWithoutExtension(path) is { } name and not "audio") => new SongInfo(name, length),

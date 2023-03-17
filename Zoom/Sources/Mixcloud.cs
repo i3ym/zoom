@@ -15,7 +15,7 @@ public static class Mixcloud
 
     public record SearchResult(SearchResultUser User, string Name, string Url, string Slug, [property: JsonPropertyName("audio_length")] int AudioLength)
     {
-        public SongInfo ToSongInfo() => new SongInfo(User.Name, Name, AudioLength);
+        public SongInfo ToSongInfo() => SongInfo.Create(User.Name, Name, AudioLength);
     }
     public record SearchResultUser(string Name);
 }

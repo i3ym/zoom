@@ -26,7 +26,7 @@ public static class YandexMusic
         var artists = json?["artists"]?.Select(x => x?["name"]?.Value<string>()) ?? throw new NullReferenceException();
         var durationMs = json?["durationMs"]?.Value<int>() ?? throw new NullReferenceException();
 
-        var info = new SongInfo(string.Join(" & ", artists), title, durationMs / 1000);
+        var info = SongInfo.Create(string.Join(" & ", artists), title, durationMs / 1000);
         var url = await FetchSongUrl(id);
 
         return new YandexTrack(id, new Song(info, MemorySoundStream.FromUrl(url)));
