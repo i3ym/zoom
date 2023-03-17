@@ -124,7 +124,7 @@ public class MusicPlayer
         yield return new Command(SongPlaysNow, new[] { "remove" }, "Убрать трек", Parameters.From(gscp, new IntCommandParameter("индекс", true) { Min = 0 }, remove));
         yield return new Command(SongPlaysNow, new[] { "move" }, "Передвинуть трек", Parameters.From(gscp, new IntCommandParameter("откуда", true) { Min = 0 }, new IntCommandParameter("куда", true) { Min = 0 }, move));
         yield return new Command(SongPlaysNow, new[] { "shuffle" }, "Перетасовать очередь", Parameters.From(gscp, shuffle));
-        yield return new Command(SongPlaysNow, new[] { "queue", "q" }, "Очередь", Parameters.From(gscp, new IntCommandParameter("страница", false) { DefaultValue = 1 }, queue));
+        yield return new Command(SongPlaysNow, new[] { "queue", "q" }, "Очередь", Parameters.From(gscp, new StringCommandParameter("страница/поиск", false) { DefaultValue = "1" }, queue));
 
         yield return new Command(new[] { "uri", "url" }, "Запустить трек по ссылке", Parameters.From(smcp, new StringCommandParameter("ссылка", true), uri));
         yield return new Command(new[] { "yt", "youtube" }, "Запустить трек с YouTube", Parameters.From(smcp, new StringCommandParameter("поиск", true), youtubeSearch));
@@ -275,10 +275,20 @@ public class MusicPlayer
 
         return "Перетасовано " + guild.Queue.Count + " треков";
     }
-    string? queue(GuildState guild, int page)
+    string? queue(GuildState guild, string pageOrSearch)
     {
         const int pagesize = 10;
         if (guild.Queue.Count == 0) return info(guild);
+
+        if (!int.TryParse(pageOrSearch, out var page))
+        {
+            return string.Join(Environment.NewLine,
+                guild.Queue
+                .Select((x, i) => (x, i))
+                .Where(x => x.x.Info.Title?.Contains(pageOrSearch, StringComparison.OrdinalIgnoreCase) == true)
+                .Select(x => $"{x.i}: {x.x.Info}")
+            );
+        }
 
         int pageCount = (int) Math.Ceiling((float) guild.Queue.Count / pagesize);
         if (page < 1 || page > pageCount) return "Страница не найдена";
