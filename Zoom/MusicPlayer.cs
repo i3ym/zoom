@@ -59,7 +59,7 @@ public class MusicPlayer
 
         yield return new Command(new[] { "uri", "url" }, "Запустить трек по ссылке", Parameters.From(smcp, new StringCommandParameter("ссылка", true), uri));
         yield return new Command(new[] { "mix" }, "Запустить трек с MixCloud", Parameters.From(smcp, new StringCommandParameter("поиск", true), mix));
-        yield return new Command(new[] { "mixu" }, "Получить URL трека с MixCloud", Parameters.From(new StringCommandParameter("поиск", true), mixu));
+        yield return new Command(new[] { "mixu" }, "Получить URL трека с MixCloud", Parameters.From(smcp, new StringCommandParameter("поиск", true), mixu));
         yield return new Command(new[] { "yt", "youtube" }, "Запустить трек с YouTube", Parameters.From(smcp, new StringCommandParameter("поиск", true), youtubeSearch));
         yield return new Command(new[] { "ya", "я" }, "Запустить яндекс радио", Parameters.From(smcp, new YandexRadioStationCommandParameter(false), yandex));
         yield return new Command(new[] { "gop", "гоп" }, "Гоп-фм", Parameters.From(smcp, gopfm));
@@ -259,32 +259,31 @@ public class MusicPlayer
 
             return enqueue(state, new[] { CreateUri(uri, Decoder.InfoFromUri(uri).Result) });
         });
-    string? mix(SocketMessage message, string search) => play(message,
+    string? mix(SocketMessage message, string query) => play(message,
         async state =>
         {
-            var searchres = await Mixcloud.SearchUrl(search);
-            if (!searchres) return searchres.GetResult().Message ?? "lox";
+            var searchres = await Mixcloud.Search(query);
+            var res = searchres.Data[0];
+            var url = await YtDlp.GetUrl(res.Url);
 
-            var identifier = "mix_" + searchres.Value.Author + "_" + searchres.Value.Slug;
-            var song = new Song(searchres.Value.Info, FileSoundStream.FromUrl(identifier, searchres.Value.Url));
+            var song = new Song(res.ToSongInfo(), FileSoundStream.FromUrl("mix_" + res.Slug, url));
 
             state.Queue.Enqueue(song);
             return song.Info.ToString();
         });
-    string? mixu(string search)
+    string? mixu(SocketMessage message, string query)
     {
-        var mixr = createMixCloud(search).Result;
-        if (!mixr) return mixr.AsString();
+        var t = Task.Run(async () =>
+        {
+            var searchres = await Mixcloud.Search(query);
+            var res = searchres.Data[0];
+            var url = await YtDlp.GetUrl(res.Url);
 
-        return mixr.Value.url;
-    }
-    static async Task<OperationResult<(Song song, string url)>> createMixCloud(string search)
-    {
-        var searchres = await Mixcloud.SearchUrl(search);
-        if (!searchres) return searchres.GetResult();
+            return url;
+        });
+        t.ContinueWith(t => message.Channel.SendMessageAsync(t.Result));
 
-        var identifier = "mix_" + searchres.Value.Author + "_" + searchres.Value.Slug;
-        return (new Song(searchres.Value.Info, FileSoundStream.FromUrl(identifier, searchres.Value.Url)), searchres.Value.Url).AsOpResult();
+        return null;
     }
     string? youtubeSearch(SocketMessage message, string search) => play(message, state => enqueue(state, YouTube.Search(search)));
     string? yandex(SocketMessage message, string? station)
