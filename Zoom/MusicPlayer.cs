@@ -9,10 +9,13 @@ public class MusicPlayer
     readonly DiscordSocketClient Client;
     readonly CommandList CommandList = new();
     readonly Dictionary<ulong, GuildState> States = new();
+    readonly ImmutableArray<IMusicSource> MusicSources;
 
     public MusicPlayer(DiscordSocketClient client)
     {
         Client = client;
+
+        MusicSources = ImmutableArray.Create<IMusicSource>(new Mixcloud());
         CommandList.Add(CreateCommands());
     }
 
@@ -44,6 +47,73 @@ public class MusicPlayer
         var gcp = GuildCommandParameter.Instance;
         var gscp = new GuildStateCommandParameter(States);
 
+
+        foreach (var source in MusicSources)
+        {
+            yield return new Command(new[] { $"{source.CommandName}" }, $"{source.Name}: поиск", Parameters.From(smcp, new StringCommandParameter("поиск", true), search));
+            yield return new Command(new[] { $"{source.CommandName}now" }, $"{source.Name}: поиск, сейчас", Parameters.From(smcp, new StringCommandParameter("поиск", true), searchnow));
+            yield return new Command(new[] { $"{source.CommandName}link" }, $"{source.Name}: прямая ссылка", Parameters.From(smcp, new StringCommandParameter("поиск", true), directurl));
+
+
+            string? dosearch(SocketMessage message, string query, bool now) => play(message, async state =>
+            {
+                var song = DataCache.TryGetCachedSearch(source.Category, query);
+                if (song is null)
+                {
+                    var (id, sinfo, url) = await loadData(source.Category, query);
+                    song = new Song(sinfo, CachingSoundStream.FromUrl(source.Category, id, url));
+                }
+
+                if (now) state.Queue.EnqueueOnTop(song);
+                else state.Queue.Enqueue(song);
+
+
+                var infotext = now
+                    ? "Играет следующим:"
+                    : $"На позиции {state.Queue.Count - 1}:";
+
+                var secuntil = now
+                    ? state.CurrentState.SongInfo.LengthSeconds
+                    : state.Queue.Take(state.Queue.Count - 1).Sum(t => t.Info.LengthSeconds);
+                secuntil -= (int) state.CurrentState.ProgressSeconds;
+
+                return $"{infotext} {song.Info} (через {TimeSpan.FromSeconds(secuntil)})";
+            });
+
+            string? search(SocketMessage message, string query) => dosearch(message, query, false);
+            string? searchnow(SocketMessage message, string query) => dosearch(message, query, true);
+            string? directurl(SocketMessage message, string query)
+            {
+                Task.Run(async () =>
+                {
+                    var category = source.Category;
+
+                    var cached = DataCache.TryGetCachedUrl(category, query);
+                    if (cached is not null) return cached;
+
+                    var (id, sinfo, url) = await loadData(category, query);
+                    return url;
+                }).ContinueWith(t => message.Channel.SendMessageAsync(t.Result));
+
+                return null;
+            };
+
+            async Task<(string id, SongInfo sinfo, string url)> loadData(string category, string query)
+            {
+                var res = await source.Search(query);
+                DataCache.SetSearch(category, query, res.Identifier);
+
+                var sinfo = res.ToSongInfo();
+                DataCache.SetSongInfo(category, res.Identifier, sinfo);
+
+                var url = await YtDlp.GetUrl(res.DirectUrl);
+                DataCache.SetSongCachedUrl(category, res.Identifier, url);
+
+                return (res.Identifier, sinfo, url);
+            }
+        }
+
+
         yield return new Command(SongPlaysNow, new[] { "info" }, "Информация о текущем треке", Parameters.From(gscp, info));
         yield return new Command(SongPlaysNow, new[] { "pause" }, "Пауза", Parameters.From(gscp, pause));
         yield return new Command(SongPlaysNow, new[] { "continue", "resume", "play", "unpause" }, "Продолжить трек", Parameters.From(gscp, cont));
@@ -57,8 +127,6 @@ public class MusicPlayer
         yield return new Command(SongPlaysNow, new[] { "queue", "q" }, "Очередь", Parameters.From(gscp, new IntCommandParameter("страница", false) { DefaultValue = 1 }, queue));
 
         yield return new Command(new[] { "uri", "url" }, "Запустить трек по ссылке", Parameters.From(smcp, new StringCommandParameter("ссылка", true), uri));
-        yield return new Command(new[] { "mix" }, "Запустить трек с MixCloud", Parameters.From(smcp, new StringCommandParameter("поиск", true), mix));
-        yield return new Command(new[] { "mixu" }, "Получить URL трека с MixCloud", Parameters.From(smcp, new StringCommandParameter("поиск", true), mixu));
         yield return new Command(new[] { "yt", "youtube" }, "Запустить трек с YouTube", Parameters.From(smcp, new StringCommandParameter("поиск", true), youtubeSearch));
         yield return new Command(new[] { "ya", "я" }, "Запустить яндекс радио", Parameters.From(smcp, new YandexRadioStationCommandParameter(false), yandex));
         yield return new Command(new[] { "gop", "гоп" }, "Гоп-фм", Parameters.From(smcp, gopfm));
@@ -258,45 +326,6 @@ public class MusicPlayer
 
             return enqueue(state, new[] { CreateUri(uri, Decoder.InfoFromUri(uri).Result) });
         });
-    string? mix(SocketMessage message, string query) => play(message,
-        async state =>
-        {
-            var cached = DataCache.TryGetCachedSearch("mixcloud", query);
-            if (cached is not null)
-            {
-                state.Queue.Enqueue(cached);
-                return cached.Info.ToString();
-            }
-
-            var searchres = await Mixcloud.Search(query);
-            var res = searchres.Data[0];
-            DataCache.SetSearch("mixcloud", query, res.Slug);
-
-            var sinfo = res.ToSongInfo();
-            DataCache.SetSongInfo("mixcloud", res.Slug, sinfo);
-
-            var url = await YtDlp.GetUrl(res.Url);
-            DataCache.SetSongCachedUrl("mixcloud", res.Slug, url);
-
-            var song = new Song(sinfo, DataCacheFileSoundStream.FromUrl("mixcloud", res.Slug, url));
-
-            state.Queue.Enqueue(song);
-            return song.Info.ToString();
-        });
-    string? mixu(SocketMessage message, string query)
-    {
-        var t = Task.Run(async () =>
-        {
-            var searchres = await Mixcloud.Search(query);
-            var res = searchres.Data[0];
-            var url = await YtDlp.GetUrl(res.Url);
-
-            return url;
-        });
-        t.ContinueWith(t => message.Channel.SendMessageAsync(t.Result));
-
-        return null;
-    }
     string? youtubeSearch(SocketMessage message, string search) => play(message, state => enqueue(state, YouTube.Search(search)));
     string? yandex(SocketMessage message, string? station)
     {

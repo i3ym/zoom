@@ -31,16 +31,23 @@ public static class DataCache
 
     public static Song? TryGetCachedSearch(string category, string query)
     {
-        var search = GetSearch(category, query);
-        if (search is null) return null;
+        var id = GetSearch(category, query);
+        if (id is null) return null;
 
-        var data = GetSongInfo(category, search);
+        var data = GetSongInfo(category, id);
         if (data is null) return null;
 
-        var cachefile = GetSongCacheFile(category, search);
+        var cachefile = GetSongCacheFile(category, id);
         if (cachefile is null) return null;
 
-        return new Song(data, CachedFileSoundStream.FromPath(Path.Combine(CacheDirectory, cachefile)));
+        return new Song(data, DirectSoundStream.FromPath(Path.Combine(CacheDirectory, cachefile)));
+    }
+    public static string? TryGetCachedUrl(string category, string query)
+    {
+        var id = GetSearch(category, query);
+        if (id is null) return null;
+
+        return GetSongCachedUrl(category, id);
     }
 }
 

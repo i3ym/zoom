@@ -67,7 +67,7 @@ public class FileSoundStream : SoundStream
     public static SoundStream FromUrl(string url) => FromUrl(url, url);
     public static SoundStream FromYoutubeId(string id) => new FileSoundStream("yt_" + id, (writer, token) => Decoder.FromUrlProc(YouTube.GetDownloadUrl(id), token, writer));
 }
-public class DataCacheFileSoundStream : SoundStream
+public class CachingSoundStream : SoundStream
 {
     public override long Loaded => Reader.Length;
     public override long Position { get => Reader.Position; set => Reader.Position = value; }
@@ -75,7 +75,7 @@ public class DataCacheFileSoundStream : SoundStream
     public readonly Stream Reader;
     protected override Func<Task>? LoadFunc { get; set; }
 
-    private DataCacheFileSoundStream(string category, string identifier, Func<Stream, CancellationToken, Task> loadFunc)
+    private CachingSoundStream(string category, string identifier, Func<Stream, CancellationToken, Task> loadFunc)
     {
         var path = Path.Combine(DataCache.CacheDirectory, Guid.NewGuid().ToString());
         Reader = File.Open(path, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
@@ -94,9 +94,9 @@ public class DataCacheFileSoundStream : SoundStream
     public override int Read(byte[] buffer) => Reader.Read(buffer);
 
 
-    public static SoundStream FromUrl(string category, string identifier, string url) => new DataCacheFileSoundStream(category, identifier, (writer, token) => Decoder.FromUrlProc(url, token, writer));
+    public static SoundStream FromUrl(string category, string identifier, string url) => new CachingSoundStream(category, identifier, (writer, token) => Decoder.FromUrlProc(url, token, writer));
 }
-public class CachedFileSoundStream : SoundStream
+public class DirectSoundStream : SoundStream
 {
     public override long Loaded => Input.Length;
     public override long Position { get => Input.Position; set => Input.Position = value; }
@@ -104,7 +104,7 @@ public class CachedFileSoundStream : SoundStream
     readonly Stream Input;
     protected override Func<Task>? LoadFunc { get; set; }
 
-    private CachedFileSoundStream(Func<CancellationToken, Stream> func)
+    private DirectSoundStream(Func<CancellationToken, Stream> func)
     {
         Input = func(CancellationToken.Token);
         LoadFunc = () => Task.CompletedTask;
@@ -113,8 +113,8 @@ public class CachedFileSoundStream : SoundStream
     public override int Read(byte[] buffer) => Input.Read(buffer);
 
 
-    public static SoundStream FromPath(string path) => new CachedFileSoundStream(token => File.OpenRead(path));
-    public static SoundStream FromStream(Stream input) => new CachedFileSoundStream(token => input);
+    public static SoundStream FromPath(string path) => new DirectSoundStream(token => File.OpenRead(path));
+    public static SoundStream FromStream(Stream input) => new DirectSoundStream(token => input);
 }
 
 public class MemorySoundStream : SoundStream
