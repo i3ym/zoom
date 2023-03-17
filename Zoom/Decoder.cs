@@ -4,6 +4,8 @@ namespace Zoom;
 
 public static class Decoder
 {
+    static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
     public const int SampleRate = 48000;
     public const int Bits = 16;
     public const int Channels = 2;
@@ -32,7 +34,7 @@ public static class Decoder
 
                 onEnd?.Invoke();
             }
-            catch (Exception ex) { Console.WriteLine(ex); }
+            catch (Exception ex) { Logger.Error(ex); }
         });
     public static Task FromStreamProc(Stream input, CancellationToken token, List<byte> addTo) =>
         Task.Run(() =>
@@ -66,7 +68,7 @@ public static class Decoder
                     else addTo.AddRange(buffer.Take(read));
                 }
             }
-            catch (Exception ex) { Console.WriteLine(ex); }
+            catch (Exception ex) { Logger.Error(ex); }
         });
     public static Stream StreamFromStream(Stream input, CancellationToken token)
     {

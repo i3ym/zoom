@@ -3,13 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zoom", "Zoom\Zoom.csproj", "{A469AFD0-6799-419D-BDC2-D09B7BD9097E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zoom", "Zoom\Zoom.csproj", "{1BCC3987-5B42-4909-9247-A2C45C8E439E}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "zomlib", "zomlib", "{CE65791F-A163-4830-A246-064B1A373D17}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commands", "zomlib\Commands\Commands.csproj", "{C05997BE-4D00-42DE-8BFC-B8E41D8CB60A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zomlib", "zomlib\Common\Zomlib.csproj", "{31B6F190-93F0-45B0-A8D6-4C373C18FC72}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zomlib", "zomlib\Zomlib.csproj", "{472C07F8-E840-4369-B7F8-62CF82397675}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,21 +16,13 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A469AFD0-6799-419D-BDC2-D09B7BD9097E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A469AFD0-6799-419D-BDC2-D09B7BD9097E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A469AFD0-6799-419D-BDC2-D09B7BD9097E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A469AFD0-6799-419D-BDC2-D09B7BD9097E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C05997BE-4D00-42DE-8BFC-B8E41D8CB60A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C05997BE-4D00-42DE-8BFC-B8E41D8CB60A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C05997BE-4D00-42DE-8BFC-B8E41D8CB60A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C05997BE-4D00-42DE-8BFC-B8E41D8CB60A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{31B6F190-93F0-45B0-A8D6-4C373C18FC72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{31B6F190-93F0-45B0-A8D6-4C373C18FC72}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{31B6F190-93F0-45B0-A8D6-4C373C18FC72}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{31B6F190-93F0-45B0-A8D6-4C373C18FC72}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{C05997BE-4D00-42DE-8BFC-B8E41D8CB60A} = {CE65791F-A163-4830-A246-064B1A373D17}
-		{31B6F190-93F0-45B0-A8D6-4C373C18FC72} = {CE65791F-A163-4830-A246-064B1A373D17}
+		{1BCC3987-5B42-4909-9247-A2C45C8E439E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BCC3987-5B42-4909-9247-A2C45C8E439E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BCC3987-5B42-4909-9247-A2C45C8E439E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BCC3987-5B42-4909-9247-A2C45C8E439E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{472C07F8-E840-4369-B7F8-62CF82397675}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{472C07F8-E840-4369-B7F8-62CF82397675}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{472C07F8-E840-4369-B7F8-62CF82397675}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{472C07F8-E840-4369-B7F8-62CF82397675}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,11 +1,12 @@
 using System.Collections.Immutable;
 using Zomlib.Commands;
-using Zoom.Sources;
 
 namespace Zoom;
 
 public class MusicPlayer
 {
+    static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
     readonly DiscordSocketClient Client;
     readonly CommandList CommandList = new();
     readonly Dictionary<ulong, GuildState> States = new();
@@ -25,8 +26,8 @@ public class MusicPlayer
             var text = message.Content;
             var prefix = prefixes.FirstOrDefault(p => text.StartsWith(p, StringComparison.Ordinal));
             if (prefix is null) return;
-            Console.WriteLine(DateTime.Now.ToShortTimeString() + " (" + ((SocketGuildChannel) message.Channel).Guild.Id + " " + message.Channel.Id + ") " + message.Author.Username + ": " + message.Content);
 
+            Logger.Info($"({((SocketGuildChannel) message.Channel).Guild.Id} : {message.Channel.Id}) {message.Author.Username}: {message.Content}");
             text = text.Substring(prefix.Length);
 
             var exec = CommandList.TryExecute(text, new MessageInfo(text, new[] { message }), out _);

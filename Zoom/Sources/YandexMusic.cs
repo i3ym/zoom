@@ -5,6 +5,8 @@ namespace Zoom.Sources;
 
 public static class YandexMusic
 {
+    static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
     static ImmutableDictionary<string, string>? Stations;
     static string? Token;
 
@@ -163,7 +165,7 @@ public static class YandexMusic
         }
         catch (WebException ex)
         {
-            Console.WriteLine(ex);
+            Logger.Error(ex);
             if (ex.Response is null) throw;
 
             using var stream = ex.Response.GetResponseStream();
@@ -235,14 +237,14 @@ public static class YandexMusic
             {
                 if (token["error_description"]?.Value<string>()?.Contains("CAPTCHA") ?? false)
                 {
-                    Console.WriteLine("CAPTCHA needed, " + token["x_captcha_url"]?.Value<string>());
+                    Logger.Info("CAPTCHA needed, " + token["x_captcha_url"]?.Value<string>());
 
                     captchaKey = token["x_captcha_key"]?.Value<string>();
                     captchaAnswer = Console.ReadLine();
                 }
                 else
                 {
-                    Console.WriteLine(token.ToString());
+                    Logger.Error(token.ToString());
                     throw new InvalidOperationException();
                 }
             }

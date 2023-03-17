@@ -2,13 +2,34 @@
 global using Discord.WebSocket;
 global using Newtonsoft.Json;
 global using Newtonsoft.Json.Linq;
+global using NLog;
 global using Zomlib;
 global using Zoom.Sources;
 using Zoom;
 
+DefaultLogging.Setup();
+LogManager.GetLogger("Zoom").Info("Initializing zoom...·");
 
-var dclient = new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent });
-dclient.Log += m => { Console.WriteLine(m); return Task.CompletedTask; };
+var dclient = new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GatewayIntents.GuildVoiceStates | GatewayIntents.Guilds | GatewayIntents.GuildMessages | GatewayIntents.MessageContent });
+
+var dsLogger = LogManager.GetLogger("Discord");
+dclient.Log += m =>
+{
+    var severity = m.Severity switch
+    {
+        LogSeverity.Info => LogLevel.Info,
+        LogSeverity.Warning => LogLevel.Warn,
+        LogSeverity.Error => LogLevel.Error,
+        LogSeverity.Verbose => LogLevel.Trace,
+        LogSeverity.Critical => LogLevel.Error,
+        LogSeverity.Debug => LogLevel.Debug,
+        _ => LogLevel.Info,
+    };
+    dsLogger.Log(severity, m.Exception, $"[{m.Source}] {m.Message}");
+
+    return Task.CompletedTask;
+};
+
 await dclient.LoginAsync(TokenType.Bot, ZoomConfig.Instance.Get<string>("discordtoken"));
 await dclient.StartAsync();
 

@@ -9,6 +9,7 @@
 
 config.json
 cookies.txt
+zoomcache/
 
 # User-specific files
 *.rsuser

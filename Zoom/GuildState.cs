@@ -4,6 +4,8 @@ namespace Zoom;
 
 public class GuildState
 {
+    readonly Logger Logger;
+
     public readonly SocketGuild Guild;
     public readonly SongQueue Queue = new SongQueue();
     public PlayState? CurrentState;
@@ -22,6 +24,8 @@ public class GuildState
 
     public GuildState(SocketGuild guild)
     {
+        Logger = LogManager.GetLogger($"Guild {guild.Id}");
+
         Guild = guild;
         Queue.OnAdd += async () =>
         {
@@ -30,7 +34,11 @@ public class GuildState
             var song = await Queue.Dequeue();
             if (song is null) return;
 
-            _ = Play(song).ContinueWith(t => { if (t.Exception is { }) Console.WriteLine(t.Exception); });
+            _ = Play(song).ContinueWith(t =>
+            {
+                if (t.Exception is not null)
+                    Logger.Error(t.Exception);
+            });
         };
     }
 
@@ -56,6 +64,7 @@ public class GuildState
         if (AudioStream is { } && (Guild.AudioClient is null || Guild.AudioClient.ConnectionState == Discord.ConnectionState.Connected)) return true;
         if (audioch is null) return false;
 
+        Logger.Info($"Connecting to voice chat {audioch.Id} '{audioch.Name}'");
         await audioch.ConnectAsync();
         AudioStream = Guild.AudioClient.CreatePCMStream(AudioApplication.Music);
 
@@ -69,7 +78,7 @@ public class GuildState
         {
             if (Guild.CurrentUser.VoiceChannel is { } && audioch.Id == Guild.CurrentUser.VoiceChannel.Id) return;
 
-            Console.WriteLine("Disconnected from voice channel " + audioch.Id);
+            Logger.Info($"Disconnected from voice channel {audioch.Id}");
             if (Guild.CurrentUser.VoiceChannel is null)
             {
                 CurrentState?.Stop();
@@ -93,7 +102,7 @@ public class GuildState
                 CurrentState.IsPaused = false;
             }
 
-            Console.WriteLine("Reconnected to voice channel " + audioch.Id);
+            Logger.Info($"Reconnected to voice channel {audioch.Id}");
         };
 
         return true;
