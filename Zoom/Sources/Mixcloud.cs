@@ -82,7 +82,7 @@ public static class Mixcloud
             #endregion
 
             var req = new HttpRequestMessage(HttpMethod.Post, "https://www.mixcloud.com/graphql") { Content = new StringContent(post) { Headers = { ContentType = new("application/json") } } };
-            req.Headers.Add("Cookie", ZoomConfig.Instance.Get<string>("mixcloudcache"));
+            req.Headers.Add("Cookie", ZoomConfig.Instance.Get<string>("mixcloudcookie"));
 
             var response = await new HttpClient().SendAsync(req);
             var respstr = await new StreamReader(await response.Content.ReadAsStreamAsync()).ReadToEndAsync();
