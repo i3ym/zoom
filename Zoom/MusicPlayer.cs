@@ -126,13 +126,13 @@ public class MusicPlayer
 
         var info = play.SongInfo.ToString();
 
-        return
-            "```"
-            + Environment.NewLine + new string(' ', Math.Max(0, length / 2 - info.Length / 2)) + info
-            + Environment.NewLine + progressBar
-            + Environment.NewLine + new string(' ', Math.Max(0, length / 2 - progressText.Length / 2 - 3)) + (play.IsPaused ? "|| " : "> ") + progressText
-            + Environment.NewLine
-            + "```";
+        return $"""
+            ```ocaml
+            {new string(' ', Math.Max(0, length / 2 - info.Length / 2))}{info}
+            {progressBar}
+            {new string(' ', Math.Max(0, length / 2 - progressText.Length / 2 - 3))}{(play.IsPaused ? "|| " : "> ")}{progressText}
+            ```
+            """;
     }
     static string ToDurationString(long seconds) =>
         (seconds >= 60 * 60 ? (seconds / 60 / 60) + "ч " : string.Empty)
