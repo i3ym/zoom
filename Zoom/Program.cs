@@ -1,4 +1,5 @@
-﻿global using Discord;
+﻿global using System.Collections.Immutable;
+global using Discord;
 global using Discord.WebSocket;
 global using Newtonsoft.Json;
 global using Newtonsoft.Json.Linq;
