@@ -222,7 +222,7 @@ public class MusicPlayer
 
         return "Очередь (" + guild.Queue.Count + " треков):"
             + Environment.NewLine + "```"
-            + Environment.NewLine + string.Join(Environment.NewLine, queue.Select((x, i) => (i + page * pagesize) + ": " + x))
+            + Environment.NewLine + string.Join(Environment.NewLine, queue.Select((x, i) => (i + (page == 0 ? 0 : 1) + page * pagesize) + ": " + x))
             + Environment.NewLine + "```"
             + Environment.NewLine + GetInfo(guild)
             + Environment.NewLine + "Страница " + (page + 1) + " из " + pageCount;
