@@ -112,10 +112,13 @@ public class DirectSoundStream : SoundStream
     public override int Read(byte[] buffer) => Input.Read(buffer);
 
 
-    public static SoundStream FromPath(string path) => new DirectSoundStream(token => File.OpenRead(path));
+    public static SoundStream FromFile(string path) => FromStream(File.OpenRead(path));
     public static SoundStream FromStream(Stream input) => new DirectSoundStream(token => input);
+
+    public static SoundStream FromFileConverted(string path) => FromStream(Decoder.StreamFromUri(path, default));
 }
 
+[Obsolete("Use DirectSoundStream instead")]
 public class MemorySoundStream : SoundStream
 {
     public override long Loaded => Data.Count;
@@ -157,5 +160,4 @@ public class PassthroughSoundStream : SoundStream
 
 
     public static SoundStream FromUri(string uri) => new PassthroughSoundStream(token => Decoder.StreamFromUri(uri, token));
-    public static SoundStream FromStream(Stream input) => new PassthroughSoundStream(token => Decoder.StreamFromStream(input, token));
 }

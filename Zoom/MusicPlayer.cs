@@ -200,8 +200,6 @@ public class MusicPlayer
         + (seconds >= 60 ? ((seconds / 60) % 60) + "м " : string.Empty)
         + (seconds % 60) + "c";
 
-    public static Song CreateUri(string uri, SongInfo info) => new Song(info, FileSoundStream.FromUrl(uri));
-
     OperationResult SongPlaysNow(MessageInfo info) =>
         GetGuildState(((SocketGuildChannel) info.Object<SocketMessage>().Channel).Guild).CurrentState is { }
         ? true
@@ -348,7 +346,7 @@ public class MusicPlayer
             Task.Run(() =>
             {
                 foreach (var (artist, title, path) in Directory.GetFiles(dir, "*.osu", SearchOption.AllDirectories).DistinctBy(Path.GetDirectoryName).Select(osuToPath).Where(x => x.HasValue).Select(x => x!.Value).OrderBy(_ => Guid.NewGuid()))
-                    state.Queue.Enqueue(new Song(SongInfo.Create(artist, title, Decoder.InfoFromUri(path).Result.LengthSeconds), MemorySoundStream.FromUrl(path)));
+                    state.Queue.Enqueue(new Song(SongInfo.Create(artist, title, Decoder.InfoFromUri(path).Result.LengthSeconds), DirectSoundStream.FromFileConverted(path)));
 
 
                 static (string artist, string title, string path)? osuToPath(string osuPath)

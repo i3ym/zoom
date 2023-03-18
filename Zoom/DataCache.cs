@@ -24,7 +24,7 @@ public static class DataCache
         var cachefile = GetSongCacheFile(category, data);
         if (cachefile is null) return null;
 
-        return new Song(info, DirectSoundStream.FromPath(Path.Combine(CacheDirectory, cachefile)));
+        return new Song(info, DirectSoundStream.FromFile(Path.Combine(CacheDirectory, cachefile)));
     }
 }
 

@@ -70,26 +70,6 @@ public static class Decoder
             }
             catch (Exception ex) { Logger.Error(ex); }
         });
-    public static Stream StreamFromStream(Stream input, CancellationToken token)
-    {
-        var proc = FFMpegString("pipe:1", token);
-
-        Task.Run(() =>
-        {
-            var buffer = new byte[1024 * 8];
-            var writer = proc.StandardInput.BaseStream;
-
-            while (!proc.HasExited)
-            {
-                var read = input.Read(buffer);
-                writer.Write(buffer, 0, read);
-            }
-
-            writer.Flush();
-        });
-
-        return proc.StandardOutput.BaseStream;
-    }
     public static Stream StreamFromUri(string uri, CancellationToken token) => FFMpegString("\"" + uri + "\"", token).StandardOutput.BaseStream;
 
     static Process FFMpegString(string input, CancellationToken token)
