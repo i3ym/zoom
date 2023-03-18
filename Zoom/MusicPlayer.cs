@@ -15,7 +15,7 @@ public class MusicPlayer
     {
         Client = client;
 
-        MusicSources = ImmutableArray.Create<IMusicSource>(new Mixcloud());
+        MusicSources = ImmutableArray.Create<IMusicSource>(new Mixcloud(), new YouTube());
         CommandList.Add(CreateCommands());
     }
 
@@ -53,15 +53,17 @@ public class MusicPlayer
             yield return new Command(new[] { $"{source.CommandName}" }, $"{source.Name}: поиск", Parameters.From(smcp, new StringCommandParameter("поиск", true), search));
             yield return new Command(new[] { $"{source.CommandName}now" }, $"{source.Name}: поиск, сейчас", Parameters.From(smcp, new StringCommandParameter("поиск", true), searchnow));
             yield return new Command(new[] { $"{source.CommandName}link" }, $"{source.Name}: прямая ссылка", Parameters.From(smcp, new StringCommandParameter("поиск", true), directurl));
+            yield return new Command(new[] { $"{source.CommandName}url" }, $"{source.Name}: поиск", Parameters.From(smcp, new StringCommandParameter("поиск", true), url));
+            yield return new Command(new[] { $"{source.CommandName}urlnow" }, $"{source.Name}: поиск, сейчас", Parameters.From(smcp, new StringCommandParameter("поиск", true), urlnow));
 
 
-            string? dosearch(SocketMessage message, string query, bool now) => play(message, async state =>
+            string? enqueue(SocketMessage message, string query, bool search, bool now) => play(message, async state =>
             {
-                var song = DataCache.TryGetCachedSearch(source.Category, query);
+                var song = DataCache.TryGetCachedSong(source.Category, query);
                 if (song is null)
                 {
-                    var (id, sinfo, url) = await loadData(source.Category, query);
-                    song = new Song(sinfo, CachingSoundStream.FromUrl(source.Category, id, url));
+                    var sinfo = (await loadinfo(source.Category, query, search))[0];
+                    song = new Song(new SongInfo(sinfo.info.Title, sinfo.info.LengthSec), CachingSoundStream.FromUrl(source.Category, sinfo.info.Id, sinfo.url));
                 }
 
                 if (now) state.Queue.EnqueueOnTop(song);
@@ -80,36 +82,30 @@ public class MusicPlayer
                 return $"{infotext} {song.Info} (через {TimeSpan.FromSeconds(secuntil)})";
             });
 
-            string? search(SocketMessage message, string query) => dosearch(message, query, false);
-            string? searchnow(SocketMessage message, string query) => dosearch(message, query, true);
+            string? search(SocketMessage message, string query) => enqueue(message, query, true, false);
+            string? searchnow(SocketMessage message, string query) => enqueue(message, query, true, true);
+            string? url(SocketMessage message, string query) => enqueue(message, query, false, false);
+            string? urlnow(SocketMessage message, string query) => enqueue(message, query, false, true);
+
             string? directurl(SocketMessage message, string query)
             {
                 Task.Run(async () =>
                 {
-                    var category = source.Category;
-
-                    var cached = DataCache.TryGetCachedUrl(category, query);
-                    if (cached is not null) return cached;
-
-                    var (id, sinfo, url) = await loadData(category, query);
-                    return url;
+                    var data = await loadinfo(source.Category, query, true);
+                    return string.Join('\n', data.Select(d => d.url));
                 }).ContinueWith(t => message.Channel.SendMessageAsync(t.Result));
 
                 return null;
             };
 
-            async Task<(string id, SongInfo sinfo, string url)> loadData(string category, string query)
+            async Task<ImmutableArray<(SongDataInfo info, string url)>> loadinfo(string category, string url, bool search)
             {
-                var res = await source.Search(query);
-                DataCache.SetSearch(category, query, res.Identifier);
+                var results = await (search ? source.Search(url) : source.GetByUrl(url));
+                foreach (var result in results)
+                    DataCache.SetSongInfo(category, result.Id, new SongInfo(result.Title, result.LengthSec));
 
-                var sinfo = res.ToSongInfo();
-                DataCache.SetSongInfo(category, res.Identifier, sinfo);
-
-                var url = await YtDlp.GetUrl(res.DirectUrl);
-                DataCache.SetSongCachedUrl(category, res.Identifier, url);
-
-                return (res.Identifier, sinfo, url);
+                var urls = await Task.WhenAll(results.Select(r => source.GetDirectUrl(r.Id)));
+                return results.Zip(urls).ToImmutableArray();
             }
         }
 
@@ -126,8 +122,6 @@ public class MusicPlayer
         yield return new Command(SongPlaysNow, new[] { "shuffle" }, "Перетасовать очередь", Parameters.From(gscp, shuffle));
         yield return new Command(SongPlaysNow, new[] { "queue", "q" }, "Очередь", Parameters.From(gscp, new StringCommandParameter("страница/поиск", false) { DefaultValue = "1" }, queue));
 
-        yield return new Command(new[] { "uri", "url" }, "Запустить трек по ссылке", Parameters.From(smcp, new StringCommandParameter("ссылка", true), uri));
-        yield return new Command(new[] { "yt", "youtube" }, "Запустить трек с YouTube", Parameters.From(smcp, new StringCommandParameter("поиск", true), youtubeSearch));
         yield return new Command(new[] { "ya", "я" }, "Запустить яндекс радио", Parameters.From(smcp, new YandexRadioStationCommandParameter(false), yandex));
         yield return new Command(new[] { "gop", "гоп" }, "Гоп-фм", Parameters.From(smcp, gopfm));
         yield return new Command(new[] { "record" }, "Радио RECORD", Parameters.From(smcp, new NullableCommandParameter<int>(new IntCommandParameter("станция", false)), radioRecord));
@@ -201,7 +195,7 @@ public class MusicPlayer
             ```
             """;
     }
-    static string ToDurationString(long seconds) =>
+    static string ToDurationString(double seconds) =>
         (seconds >= 60 * 60 ? (seconds / 60 / 60) + "ч " : string.Empty)
         + (seconds >= 60 ? ((seconds / 60) % 60) + "м " : string.Empty)
         + (seconds % 60) + "c";
@@ -326,17 +320,6 @@ public class MusicPlayer
         return "fxd.";
     }
 
-    string? uri(SocketMessage message, string uri) => play(message,
-        async state =>
-        {
-            if (uri.StartsWith("/")) return "Неверный URL";
-
-            if (uri.StartsWith("https://music.yandex.ru/")) return enqueue(state, (await YandexMusic.ParseYandexMusicUrlAsync(uri)).Select(x => x.Song).ToArray());
-            if (uri.Contains("youtube.com/") || uri.Contains("youtu.be")) return enqueue(state, YouTube.Url(uri));
-
-            return enqueue(state, new[] { CreateUri(uri, Decoder.InfoFromUri(uri).Result) });
-        });
-    string? youtubeSearch(SocketMessage message, string search) => play(message, state => enqueue(state, YouTube.Search(search)));
     string? yandex(SocketMessage message, string? station)
     {
         if (station is null) return "Выберите станцию";

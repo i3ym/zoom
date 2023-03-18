@@ -65,7 +65,6 @@ public class FileSoundStream : SoundStream
     public static SoundStream FromStream(string identifier, Stream input) => new FileSoundStream(identifier, (writer, token) => input.CopyToAsync(writer, token));
     public static SoundStream FromUrl(string identifier, string url) => new FileSoundStream(identifier, (writer, token) => Decoder.FromUrlProc(url, token, writer));
     public static SoundStream FromUrl(string url) => FromUrl(url, url);
-    public static SoundStream FromYoutubeId(string id) => new FileSoundStream("yt_" + id, (writer, token) => Decoder.FromUrlProc(YouTube.GetDownloadUrl(id), token, writer));
 }
 public class CachingSoundStream : SoundStream
 {
