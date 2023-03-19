@@ -36,21 +36,4 @@ public class Mixcloud : IMusicSource
         public SongInfo ToSongInfo() => SongInfo.Create(User.Name, Name, AudioLength);
     }
     public record SearchResultUser(string Name);
-
-
-    /*public async Task<Zoom.Sources.SearchResult> Searchc(string query)
-    {
-        var results = await Http.Instance.GetFromJsonAsync<SearchResults>($"https://api.mixcloud.com/search/?type=cloudcast&q={HttpUtility.UrlEncode(query)}").ThrowIfNull();
-
-    }
-
-    Task<MusicData> IMusicSource.GetByUrl(string url) => YtDlp.GetUrl(url);
-    public Task<string> GetDirectUrl(string data) => YtDlp.GetUrl(data);
-
-
-    async Task<ImmutableArray<MusicData>> IMusicSource.Search(string query)
-    {
-        var data = (await Search(query)).Data[0];
-        return ImmutableArray.Create(new MusicData(data.Slug, data.Url, data.ToSongInfo()));
-    }*/
 }
