@@ -379,22 +379,7 @@ public class MusicPlayer
         });
     }
 
-    string? play(SocketMessage message, Func<GuildState, string> play)
-    {
-        var t = Task.Run(async () =>
-        {
-            var guild = ((SocketGuildChannel) message.Channel).Guild;
-            var state = GetGuildState(guild);
-
-            if (!(await state.ReconnectIfNeeded(((Discord.WebSocket.SocketGuildUser) message.Author).VoiceChannel)))
-                return "Ты в аудиоканал то зайди а";
-
-            return play(GetGuildState(guild));
-        });
-        t.ContinueWith(t => message.Channel.SendMessageAsync(t.Result));
-
-        return null;
-    }
+    string? play(SocketMessage message, Func<GuildState, string> playfunc) => play(message, state => Task.FromResult(playfunc(state)));
     string? play(SocketMessage message, Func<GuildState, Task<string>> play)
     {
         var guild = ((SocketGuildChannel) message.Channel).Guild;
