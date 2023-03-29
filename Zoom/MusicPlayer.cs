@@ -72,7 +72,7 @@ public class MusicPlayer
 
                 var infotext = now
                     ? "Играет следующим:"
-                    : $"На позиции {state.Queue.Count - 1}:";
+                    : $"На позиции {state.Queue.Count}:";
 
                 var secuntil = now
                     ? state.CurrentState.SongInfo.LengthSeconds
