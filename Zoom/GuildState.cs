@@ -65,12 +65,12 @@ public class GuildState
         if (audioch is null) return false;
 
         Logger.Info($"Connecting to voice chat {audioch.Id} '{audioch.Name}'");
-        await audioch.ConnectAsync();
+        await audioch.ConnectAsync(selfDeaf: true);
         AudioStream = Guild.AudioClient.CreatePCMStream(AudioApplication.Music);
 
         if (CurrentState is { })
         {
-            CurrentState.Stream = AudioStream;
+            CurrentState.Reconnect(AudioStream);
             CurrentState.IsPaused = false;
         }
 
