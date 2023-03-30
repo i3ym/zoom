@@ -196,9 +196,9 @@ public class MusicPlayer
             """;
     }
     static string ToDurationString(double seconds) =>
-        (seconds >= 60 * 60 ? (seconds / 60 / 60) + "ч " : string.Empty)
-        + (seconds >= 60 ? ((seconds / 60) % 60) + "м " : string.Empty)
-        + (seconds % 60) + "c";
+        (seconds >= 60 * 60 ? (int) (seconds / 60 / 60) + "ч " : string.Empty)
+        + (seconds >= 60 ? (int) ((seconds / 60) % 60) + "м " : string.Empty)
+        + (int) (seconds % 60) + "c";
 
     OperationResult SongPlaysNow(MessageInfo info) =>
         GetGuildState(((SocketGuildChannel) info.Object<SocketMessage>().Channel).Guild).CurrentState is { }
