@@ -50,11 +50,11 @@ public class MusicPlayer
 
         foreach (var source in MusicSources)
         {
-            yield return new Command(new[] { $"{source.CommandName}" }, $"{source.Name}: поиск", Parameters.From(smcp, new StringCommandParameter("поиск", true), search));
-            yield return new Command(new[] { $"{source.CommandName}now" }, $"{source.Name}: поиск, сейчас", Parameters.From(smcp, new StringCommandParameter("поиск", true), searchnow));
-            yield return new Command(new[] { $"{source.CommandName}link" }, $"{source.Name}: прямая ссылка", Parameters.From(smcp, new StringCommandParameter("поиск", true), directurl));
-            yield return new Command(new[] { $"{source.CommandName}url" }, $"{source.Name}: поиск", Parameters.From(smcp, new StringCommandParameter("поиск", true), url));
-            yield return new Command(new[] { $"{source.CommandName}urlnow" }, $"{source.Name}: поиск, сейчас", Parameters.From(smcp, new StringCommandParameter("поиск", true), urlnow));
+            yield return new Command(new[] { $"{source.CommandName}" }, $"{source.Name}: поиск", Parameters.From(smcp, new StringCommandParameter("запрос", true), search));
+            yield return new Command(new[] { $"{source.CommandName}now" }, $"{source.Name}: поиск, сейчас", Parameters.From(smcp, new StringCommandParameter("запрос", true), searchnow));
+            yield return new Command(new[] { $"{source.CommandName}link" }, $"{source.Name}: прямая ссылка", Parameters.From(smcp, new StringCommandParameter("запрос", true), directurl));
+            yield return new Command(new[] { $"{source.CommandName}url" }, $"{source.Name}: ссылка", Parameters.From(smcp, new StringCommandParameter("ссылка", true), url));
+            yield return new Command(new[] { $"{source.CommandName}urlnow" }, $"{source.Name}: ссылка, сейчас", Parameters.From(smcp, new StringCommandParameter("ссылка", true), urlnow));
 
 
             string? enqueue(SocketMessage message, string query, bool search, bool now) => play(message, async state =>
