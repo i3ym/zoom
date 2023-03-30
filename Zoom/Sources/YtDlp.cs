@@ -24,7 +24,7 @@ public static class YtDlp
         var data = await JStart<Info>($"--flat-playlist --cookies cookies.txt \"{str}\"");
         return data
             .Where(e => e.duration is not null)
-            .Select(e => new SongDataInfo(e.id, e.title, e.duration!.Value))
+            .Select(e => new SongDataInfo(e.id, e.title, e.duration!.Value, null))
             .ToImmutableArray();
     }
     record Info(string id, string title, double? duration = null);

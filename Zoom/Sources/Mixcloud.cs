@@ -19,7 +19,7 @@ public class Mixcloud : IMusicSource
         var search = await SearchMix(query);
         return search.Data
             //.Take(IMusicSource.MaxSearch)
-            .Select(e => new SongDataInfo(e.Slug, e.Name, e.AudioLength))
+            .Select(e => new SongDataInfo(e.Slug, e.Name, e.AudioLength, e.Url))
             .ToImmutableArray();
     }
 

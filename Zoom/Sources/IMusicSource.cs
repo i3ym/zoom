@@ -1,6 +1,6 @@
 namespace Zoom.Sources;
 
-public record SongDataInfo(string Id, string Title, double LengthSec);
+public record SongDataInfo(string Id, string Title, double LengthSec, string? Url);
 public interface IMusicSource
 {
     public const int MaxSearch = 5;

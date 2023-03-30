@@ -104,7 +104,7 @@ public class MusicPlayer
                 foreach (var result in results)
                     DataCache.SetSongInfo(category, result.Id, new SongInfo(result.Title, result.LengthSec));
 
-                var urls = await Task.WhenAll(results.Select(r => source.GetDirectUrl(r.Id)));
+                var urls = await Task.WhenAll(results.Select(r => source.GetDirectUrl(r.Url ?? r.Id)));
                 return results.Zip(urls).ToImmutableArray();
             }
         }
