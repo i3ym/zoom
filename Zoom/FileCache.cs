@@ -12,9 +12,6 @@ public static class FileCache
         if (File.Exists(InfoJsonPath))
             CachedFiles = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(InfoJsonPath)).ThrowIfNull();
         else CachedFiles = new();
-
-        Directory.CreateDirectory(CacheDirectory);
-        LogManager.GetCurrentClassLogger().Info($"Found {CachedFiles.Count} cached files");
     }
 
     static void Save() => File.WriteAllText(InfoJsonPath, JsonConvert.SerializeObject(CachedFiles, Formatting.Indented));

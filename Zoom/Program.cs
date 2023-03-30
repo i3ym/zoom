@@ -9,7 +9,10 @@ global using Zoom.Sources;
 using Zoom;
 
 DefaultLogging.Setup();
-LogManager.GetLogger("Zoom").Info("Initializing zoom...·");
+LogManager.GetLogger("Zoom").Info("Initializing zoom...");
+
+Directory.CreateDirectory(ZoomConfig.Instance.Get<string>("cachepath"));
+LogManager.GetCurrentClassLogger().Info($"Found {Directory.GetFiles(ZoomConfig.Instance.Get<string>("cachepath")).Length - 1} cached files");
 
 var dclient = new DiscordSocketClient(new DiscordSocketConfig() { GatewayIntents = GatewayIntents.GuildVoiceStates | GatewayIntents.Guilds | GatewayIntents.GuildMessages | GatewayIntents.MessageContent });
 
